@@ -7,9 +7,18 @@
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
     <style>
         body { margin: 0; overflow: hidden; }
+        #healthBar {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 200px;
+            height: 20px;
+            background: red;
+        }
     </style>
 </head>
 <body>
+    <div id="healthBar"></div>
     <script>
         const config = {
             type: Phaser.AUTO,
@@ -24,7 +33,7 @@
         };
         
         const game = new Phaser.Game(config);
-        let player, enemy, cursors;
+        let player, enemy, cursors, playerHealth = 100;
         
         function preload() {
             this.load.image('background', 'https://via.placeholder.com/800x600');
@@ -77,6 +86,7 @@
             }
             
             enemy.anims.play('enemy_walk', true);
+            checkCollision();
         }
         
         function attack() {
@@ -84,6 +94,18 @@
             if (distance < 80) {
                 enemy.setTint(0xff0000);
                 setTimeout(() => enemy.destroy(), 500);
+            }
+        }
+        
+        function checkCollision() {
+            let distance = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
+            if (distance < 50) {
+                playerHealth -= 1;
+                document.getElementById('healthBar').style.width = playerHealth * 2 + 'px';
+                if (playerHealth <= 0) {
+                    alert('Game Over!');
+                    location.reload();
+                }
             }
         }
     </script>
