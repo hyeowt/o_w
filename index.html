@@ -106,8 +106,23 @@
             enemy.textContent = '👹';
             document.body.appendChild(enemy);
             
-            let spawnX = Math.random() * window.innerWidth;
-            let spawnY = -50;
+            let spawnEdge = Math.floor(Math.random() * 4);
+            let spawnX, spawnY;
+            
+            if (spawnEdge === 0) {
+                spawnX = Math.random() * window.innerWidth;
+                spawnY = -50;
+            } else if (spawnEdge === 1) {
+                spawnX = Math.random() * window.innerWidth;
+                spawnY = window.innerHeight + 50;
+            } else if (spawnEdge === 2) {
+                spawnX = -50;
+                spawnY = Math.random() * window.innerHeight;
+            } else {
+                spawnX = window.innerWidth + 50;
+                spawnY = Math.random() * window.innerHeight;
+            }
+            
             enemy.style.left = `${spawnX}px`;
             enemy.style.top = `${spawnY}px`;
             
@@ -134,11 +149,12 @@
         }
 
         function updateEnemySpawnRate() {
-            enemySpawnRate = Math.max(1000, 3000 - score * 100);
+            enemySpawnRate = Math.max(500, 3000 - score * 150);
+            enemySpeed = 100 + score * 10;
             setTimeout(spawnEnemy, enemySpawnRate);
         }
         
-        setTimeout(spawnEnemy, enemySpawnRate);
+        setInterval(spawnEnemy, enemySpawnRate);
 
         document.addEventListener('keydown', function(event) {
             if (event.key === 'q' && Date.now() - lastAttackTime > 1000) {
@@ -163,26 +179,7 @@
                     attackY += Math.sin(angle) * (attackSpeed / 60);
                     attack.style.left = `${attackX}px`;
                     attack.style.top = `${attackY}px`;
-                    
-                    document.querySelectorAll('.enemy').forEach(enemy => {
-                        let enemyRect = enemy.getBoundingClientRect();
-                        if (
-                            attackX > enemyRect.left && attackX < enemyRect.right &&
-                            attackY > enemyRect.top && attackY < enemyRect.bottom
-                        ) {
-                            enemy.remove();
-                            attack.remove();
-                            score++;
-                            scoreDisplay.textContent = `Skor: ${score}`;
-                            updateEnemySpawnRate();
-                        }
-                    });
-                    
-                    if (attackX > 0 && attackY > 0 && attackX < window.innerWidth && attackY < window.innerHeight) {
-                        requestAnimationFrame(moveAttack);
-                    } else {
-                        attack.remove();
-                    }
+                    requestAnimationFrame(moveAttack);
                 }
                 requestAnimationFrame(moveAttack);
             }
