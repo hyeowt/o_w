@@ -31,19 +31,30 @@
             font-size: 30px;
             color: yellow;
         }
+        #score {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            color: white;
+        }
     </style>
 </head>
 <body>
+    <div id="score">Skor: 0</div>
     <div id="character">⚔️</div>
 
     <script>
         let character = document.getElementById('character');
+        let scoreDisplay = document.getElementById('score');
         let speed = 200;
         let enemySpeed = 100;
         let attackSpeed = 400;
         let targetX = window.innerWidth / 2;
         let targetY = window.innerHeight / 2;
         let moving = false;
+        let score = 0;
         
         document.addEventListener('click', function(event) {
             targetX = event.clientX;
@@ -126,8 +137,8 @@
                 attack.style.left = `${charRect.left + charRect.width / 2}px`;
                 attack.style.top = `${charRect.top + charRect.height / 2}px`;
                 
-                let mouseX = targetX;
-                let mouseY = targetY;
+                let mouseX = event.clientX;
+                let mouseY = event.clientY;
                 let dx = mouseX - charRect.left;
                 let dy = mouseY - charRect.top;
                 let angle = Math.atan2(dy, dx);
@@ -149,6 +160,8 @@
                         ) {
                             enemy.remove();
                             attack.remove();
+                            score++;
+                            scoreDisplay.textContent = `Skor: ${score}`;
                         }
                     });
                     
