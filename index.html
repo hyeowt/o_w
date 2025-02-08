@@ -148,12 +148,6 @@
             requestAnimationFrame(moveEnemy);
         }
 
-        function updateEnemySpawnRate() {
-            enemySpawnRate = Math.max(500, 3000 - score * 150);
-            enemySpeed = 100 + score * 10;
-            setTimeout(spawnEnemy, enemySpawnRate);
-        }
-        
         setInterval(spawnEnemy, enemySpawnRate);
 
         document.addEventListener('keydown', function(event) {
@@ -179,6 +173,20 @@
                     attackY += Math.sin(angle) * (attackSpeed / 60);
                     attack.style.left = `${attackX}px`;
                     attack.style.top = `${attackY}px`;
+                    
+                    document.querySelectorAll('.enemy').forEach(enemy => {
+                        let enemyRect = enemy.getBoundingClientRect();
+                        if (
+                            attackX > enemyRect.left && attackX < enemyRect.right &&
+                            attackY > enemyRect.top && attackY < enemyRect.bottom
+                        ) {
+                            enemy.remove();
+                            attack.remove();
+                            score++;
+                            scoreDisplay.textContent = `Skor: ${score}`;
+                        }
+                    });
+                    
                     requestAnimationFrame(moveAttack);
                 }
                 requestAnimationFrame(moveAttack);
