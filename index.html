@@ -55,24 +55,65 @@
     <script>
         let character = document.getElementById('character');
         let scoreDisplay = document.getElementById('score');
-        let speed = 200;
-        let enemySpeed = 100;
-        let attackSpeed = 400;
+        let speed = 3;
+        let enemySpeed = 1.5;
+        let attackSpeed = 6;
+        let enemySpawnRate = 3000;
+        let score = 0;
         let targetX = window.innerWidth / 2;
         let targetY = window.innerHeight / 2;
         let moving = false;
-        let score = 0;
         let mouseX = 0;
         let mouseY = 0;
-        let enemySpawnRate = 3000;
         let lastAttackTime = 0;
         let targetPoint;
-        
+
         document.addEventListener('mousemove', function(event) {
             mouseX = event.clientX;
             mouseY = event.clientY;
         });
-        
+
+        document.addEventListener('click', function(event) {
+            targetX = event.clientX;
+            targetY = event.clientY;
+
+            if (targetPoint) targetPoint.remove();
+            targetPoint = document.createElement('div');
+            targetPoint.classList.add('target-point');
+            targetPoint.style.left = `${targetX - 5}px`;
+            targetPoint.style.top = `${targetY - 5}px`;
+            document.body.appendChild(targetPoint);
+
+            if (!moving) moveCharacter();
+        });
+
+        function moveCharacter() {
+            moving = true;
+            function step() {
+                let rect = character.getBoundingClientRect();
+                let x = rect.left + rect.width / 2;
+                let y = rect.top + rect.height / 2;
+                let dx = targetX - x;
+                let dy = targetY - y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 5) {
+                    moving = false;
+                    if (targetPoint) {
+                        targetPoint.remove();
+                        targetPoint = null;
+                    }
+                    return;
+                }
+
+                let angle = Math.atan2(dy, dx);
+                character.style.left = `${x + Math.cos(angle) * speed}px`;
+                character.style.top = `${y + Math.sin(angle) * speed}px`;
+                requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        }
+
         document.addEventListener('keydown', function(event) {
             if (event.key === 'q') {
                 let now = Date.now();
@@ -86,53 +127,63 @@
         function spawnAttack() {
             let attack = document.createElement('div');
             attack.classList.add('attack');
-            attack.textContent = '⚡';
+            attack.textContent = '💥';
             document.body.appendChild(attack);
             
-            let charRect = character.getBoundingClientRect();
-            let startX = charRect.left + charRect.width / 2;
-            let startY = charRect.top + charRect.height / 2;
-            
-            attack.style.left = `${startX}px`;
-            attack.style.top = `${startY}px`;
-            
+            let rect = character.getBoundingClientRect();
+            attack.style.left = `${rect.left + rect.width / 2}px`;
+            attack.style.top = `${rect.top + rect.height / 2}px`;
+
             function moveAttack() {
                 let attackRect = attack.getBoundingClientRect();
                 let dx = mouseX - attackRect.left;
                 let dy = mouseY - attackRect.top;
-                let distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance < 10) {
-                    attack.remove();
-                    return;
-                }
-                
                 let angle = Math.atan2(dy, dx);
-                let moveX = Math.cos(angle) * (attackSpeed / 60);
-                let moveY = Math.sin(angle) * (attackSpeed / 60);
-                
-                attack.style.left = `${attackRect.left + moveX}px`;
-                attack.style.top = `${attackRect.top + moveY}px`;
-                
+                attack.style.left = `${attackRect.left + Math.cos(angle) * attackSpeed}px`;
+                attack.style.top = `${attackRect.top + Math.sin(angle) * attackSpeed}px`;
+
                 document.querySelectorAll('.enemy').forEach(enemy => {
                     let enemyRect = enemy.getBoundingClientRect();
-                    if (
-                        attackRect.left < enemyRect.right &&
-                        attackRect.right > enemyRect.left &&
-                        attackRect.top < enemyRect.bottom &&
-                        attackRect.bottom > enemyRect.top
-                    ) {
+                    if (attackRect.left < enemyRect.right && attackRect.right > enemyRect.left && attackRect.top < enemyRect.bottom && attackRect.bottom > enemyRect.top) {
                         enemy.remove();
                         attack.remove();
                         score++;
                         scoreDisplay.textContent = `Skor: ${score}`;
-                        return;
+                        enemySpeed += 0.1;
+                        enemySpawnRate = Math.max(1000, enemySpawnRate - 100);
                     }
                 });
                 requestAnimationFrame(moveAttack);
             }
             requestAnimationFrame(moveAttack);
         }
+
+        function spawnEnemy() {
+            let enemy = document.createElement('div');
+            enemy.classList.add('enemy');
+            enemy.textContent = '👹';
+            document.body.appendChild(enemy);
+
+            let spawnX = Math.random() * window.innerWidth;
+            let spawnY = Math.random() * window.innerHeight;
+            enemy.style.left = `${spawnX}px`;
+            enemy.style.top = `${spawnY}px`;
+
+            function moveEnemy() {
+                let rect = character.getBoundingClientRect();
+                let enemyRect = enemy.getBoundingClientRect();
+                let angle = Math.atan2(rect.top - enemyRect.top, rect.left - enemyRect.left);
+                enemy.style.left = `${enemyRect.left + Math.cos(angle) * enemySpeed}px`;
+                enemy.style.top = `${enemyRect.top + Math.sin(angle) * enemySpeed}px`;
+
+                if (Math.abs(rect.left - enemyRect.left) < 20 && Math.abs(rect.top - enemyRect.top) < 20) {
+                    alert('Oyun Bitti!');
+                    location.reload();
+                } else requestAnimationFrame(moveEnemy);
+            }
+            requestAnimationFrame(moveEnemy);
+        }
+        setInterval(spawnEnemy, enemySpawnRate);
     </script>
 </body>
 </html>
