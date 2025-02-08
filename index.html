@@ -3,20 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Savaşçı Noktalama Karakteri</title>
+    <title>Online Savaşçı Noktalama Karakteri</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <style>
         body {
             margin: 0;
             overflow: hidden;
             background-color: #222;
+            color: white;
+            font-family: Arial, sans-serif;
         }
         .character {
             position: absolute;
-            top: 50%;
-            left: 50%;
             font-size: 50px;
-            color: white;
-            transform: translate(-50%, -50%);
             font-weight: bold;
             text-shadow: 2px 2px 5px red;
         }
@@ -24,71 +23,108 @@
             position: absolute;
             width: 10px;
             height: 10px;
-            background-color: yellow;
             border-radius: 50%;
+        }
+        .scoreboard {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="character">⚔️</div>
+    <div class="scoreboard">Oyuncu 1: <span id="score1">0</span> - Oyuncu 2: <span id="score2">0</span></div>
 
     <script>
-        const character = document.querySelector('.character');
-        let posX = window.innerWidth / 2;
-        let posY = window.innerHeight / 2;
-        const step = 10;
-        let direction = 'right';
+        const socket = io('http://localhost:3000');
+        const characters = {};
+        const attacks = [];
+        let playerId = null;
+        let score = { player1: 0, player2: 0 };
 
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'ArrowUp') {
-                posY -= step;
-                direction = 'up';
-            }
-            if (event.key === 'ArrowDown') {
-                posY += step;
-                direction = 'down';
-            }
-            if (event.key === 'ArrowLeft') {
-                posX -= step;
-                direction = 'left';
-            }
-            if (event.key === 'ArrowRight') {
-                posX += step;
-                direction = 'right';
-            }
-            character.style.left = `${posX}px`;
-            character.style.top = `${posY}px`;
+        socket.on('init', (id) => {
+            playerId = id;
+        });
 
-            if (event.key === ' ') {
-                attack(direction);
+        socket.on('updatePlayers', (players) => {
+            Object.keys(players).forEach(id => {
+                if (!characters[id]) {
+                    const char = document.createElement('div');
+                    char.classList.add('character');
+                    char.textContent = '⚔️';
+                    char.style.color = id === playerId ? 'blue' : 'red';
+                    document.body.appendChild(char);
+                    characters[id] = char;
+                }
+                characters[id].style.left = `${players[id].x}px`;
+                characters[id].style.top = `${players[id].y}px`;
+            });
+        });
+
+        socket.on('playerDisconnected', (id) => {
+            if (characters[id]) {
+                characters[id].remove();
+                delete characters[id];
             }
         });
 
-        function attack(initialDirection) {
+        socket.on('attack', ({ id, x, y, direction }) => {
             const attackElement = document.createElement('div');
             attackElement.classList.add('attack');
+            attackElement.style.left = `${x}px`;
+            attackElement.style.top = `${y}px`;
+            attackElement.style.backgroundColor = id === playerId ? 'blue' : 'red';
             document.body.appendChild(attackElement);
-            
-            let attackX = posX;
-            let attackY = posY;
-            attackElement.style.left = `${attackX}px`;
-            attackElement.style.top = `${attackY}px`;
-            
-            const attackInterval = setInterval(() => {
-                if (initialDirection === 'right') attackX += 20;
-                if (initialDirection === 'left') attackX -= 20;
-                if (initialDirection === 'up') attackY -= 20;
-                if (initialDirection === 'down') attackY += 20;
+            attacks.push({ element: attackElement, direction, owner: id });
+        });
+
+        document.addEventListener('keydown', (event) => {
+            let move = { x: 0, y: 0 };
+            if (event.key === 'ArrowUp') move.y = -10;
+            if (event.key === 'ArrowDown') move.y = 10;
+            if (event.key === 'ArrowLeft') move.x = -10;
+            if (event.key === 'ArrowRight') move.x = 10;
+            if (move.x !== 0 || move.y !== 0) {
+                socket.emit('move', move);
+            }
+            if (event.key === ' ') {
+                socket.emit('attack');
+            }
+        });
+
+        function gameLoop() {
+            attacks.forEach((attack, index) => {
+                if (attack.direction === 'right') attack.element.style.left = `${parseInt(attack.element.style.left) + 10}px`;
+                if (attack.direction === 'left') attack.element.style.left = `${parseInt(attack.element.style.left) - 10}px`;
+                if (attack.direction === 'up') attack.element.style.top = `${parseInt(attack.element.style.top) - 10}px`;
+                if (attack.direction === 'down') attack.element.style.top = `${parseInt(attack.element.style.top) + 10}px`;
                 
-                attackElement.style.left = `${attackX}px`;
-                attackElement.style.top = `${attackY}px`;
-                
-                if (attackX > window.innerWidth || attackX < 0 || attackY > window.innerHeight || attackY < 0) {
-                    clearInterval(attackInterval);
-                    attackElement.remove();
-                }
-            }, 50);
+                Object.keys(characters).forEach(id => {
+                    if (id !== attack.owner) {
+                        const char = characters[id];
+                        const rect1 = char.getBoundingClientRect();
+                        const rect2 = attack.element.getBoundingClientRect();
+                        if (rect1.left < rect2.right && rect1.right > rect2.left && rect1.top < rect2.bottom && rect1.bottom > rect2.top) {
+                            socket.emit('hit', { attacker: attack.owner, victim: id });
+                            attack.element.remove();
+                            attacks.splice(index, 1);
+                        }
+                    }
+                });
+            });
+            requestAnimationFrame(gameLoop);
         }
+        gameLoop();
+
+        socket.on('scoreUpdate', (newScore) => {
+            score = newScore;
+            document.getElementById('score1').textContent = score.player1;
+            document.getElementById('score2').textContent = score.player2;
+        });
     </script>
 </body>
 </html>
