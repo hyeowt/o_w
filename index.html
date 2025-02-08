@@ -24,11 +24,12 @@
         };
         
         const game = new Phaser.Game(config);
-        let player;
+        let player, enemy, cursors;
         
         function preload() {
             this.load.image('background', 'https://via.placeholder.com/800x600');
             this.load.spritesheet('knight', 'https://opengameart.org/sites/default/files/knight_walk.png', { frameWidth: 64, frameHeight: 64 });
+            this.load.spritesheet('enemy', 'https://opengameart.org/sites/default/files/goblin_walk.png', { frameWidth: 64, frameHeight: 64 });
         }
         
         function create() {
@@ -37,6 +38,11 @@
             player.setBounce(0.2);
             player.setCollideWorldBounds(true);
             
+            enemy = this.physics.add.sprite(600, 450, 'enemy');
+            enemy.setBounce(0.2);
+            enemy.setCollideWorldBounds(true);
+            enemy.setVelocityX(-50);
+            
             this.anims.create({
                 key: 'walk',
                 frames: this.anims.generateFrameNumbers('knight', { start: 0, end: 3 }),
@@ -44,18 +50,42 @@
                 repeat: -1
             });
             
-            this.input.keyboard.on('keydown-RIGHT', () => {
-                player.setVelocityX(160);
-                player.anims.play('walk', true);
+            this.anims.create({
+                key: 'enemy_walk',
+                frames: this.anims.generateFrameNumbers('enemy', { start: 0, end: 3 }),
+                frameRate: 10,
+                repeat: -1
             });
             
-            this.input.keyboard.on('keyup-RIGHT', () => {
-                player.setVelocityX(0);
-                player.anims.stop();
-            });
+            cursors = this.input.keyboard.createCursorKeys();
         }
         
-        function update() {}
+        function update() {
+            if (cursors.right.isDown) {
+                player.setVelocityX(160);
+                player.anims.play('walk', true);
+            } else if (cursors.left.isDown) {
+                player.setVelocityX(-160);
+                player.anims.play('walk', true);
+            } else {
+                player.setVelocityX(0);
+                player.anims.stop();
+            }
+            
+            if (cursors.space.isDown) {
+                attack();
+            }
+            
+            enemy.anims.play('enemy_walk', true);
+        }
+        
+        function attack() {
+            let distance = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
+            if (distance < 80) {
+                enemy.setTint(0xff0000);
+                setTimeout(() => enemy.destroy(), 500);
+            }
+        }
     </script>
 </body>
 </html>
