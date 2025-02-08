@@ -55,6 +55,13 @@
         let targetY = window.innerHeight / 2;
         let moving = false;
         let score = 0;
+        let mouseX = 0;
+        let mouseY = 0;
+        
+        document.addEventListener('mousemove', function(event) {
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        });
         
         document.addEventListener('click', function(event) {
             targetX = event.clientX;
@@ -134,29 +141,26 @@
                 document.body.appendChild(attack);
                 
                 let charRect = character.getBoundingClientRect();
-                attack.style.left = `${charRect.left + charRect.width / 2}px`;
-                attack.style.top = `${charRect.top + charRect.height / 2}px`;
+                let attackX = charRect.left + charRect.width / 2;
+                let attackY = charRect.top + charRect.height / 2;
+                attack.style.left = `${attackX}px`;
+                attack.style.top = `${attackY}px`;
                 
-                let mouseX = event.clientX;
-                let mouseY = event.clientY;
-                let dx = mouseX - charRect.left;
-                let dy = mouseY - charRect.top;
+                let dx = mouseX - attackX;
+                let dy = mouseY - attackY;
                 let angle = Math.atan2(dy, dx);
                 
                 function moveAttack() {
-                    let attackRect = attack.getBoundingClientRect();
-                    let moveX = Math.cos(angle) * (attackSpeed / 60);
-                    let moveY = Math.sin(angle) * (attackSpeed / 60);
-                    attack.style.left = `${attackRect.left + moveX}px`;
-                    attack.style.top = `${attackRect.top + moveY}px`;
+                    attackX += Math.cos(angle) * (attackSpeed / 60);
+                    attackY += Math.sin(angle) * (attackSpeed / 60);
+                    attack.style.left = `${attackX}px`;
+                    attack.style.top = `${attackY}px`;
                     
                     document.querySelectorAll('.enemy').forEach(enemy => {
                         let enemyRect = enemy.getBoundingClientRect();
                         if (
-                            attackRect.left < enemyRect.right &&
-                            attackRect.right > enemyRect.left &&
-                            attackRect.top < enemyRect.bottom &&
-                            attackRect.bottom > enemyRect.top
+                            attackX > enemyRect.left && attackX < enemyRect.right &&
+                            attackY > enemyRect.top && attackY < enemyRect.bottom
                         ) {
                             enemy.remove();
                             attack.remove();
@@ -165,11 +169,7 @@
                         }
                     });
                     
-                    if (
-                        attackRect.left > 0 && attackRect.top > 0 &&
-                        attackRect.left < window.innerWidth &&
-                        attackRect.top < window.innerHeight
-                    ) {
+                    if (attackX > 0 && attackY > 0 && attackX < window.innerWidth && attackY < window.innerHeight) {
                         requestAnimationFrame(moveAttack);
                     } else {
                         attack.remove();
