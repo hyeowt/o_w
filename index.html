@@ -17,7 +17,9 @@
         #character {
             position: absolute;
             font-size: 50px;
-            transition: transform 2s linear;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
         }
     </style>
 </head>
@@ -26,16 +28,45 @@
 
     <script>
         let character = document.getElementById('character');
-        let animation;
+        let speed = 200; // Piksel/saniye
+        let targetX = window.innerWidth / 2;
+        let targetY = window.innerHeight / 2;
+        let moving = false;
 
         document.addEventListener('click', function(event) {
-            clearTimeout(animation);
-            let x = event.clientX;
-            let y = event.clientY;
-            character.style.transition = 'transform 2s linear';
-            character.style.transform = `translate(${x}px, ${y}px)`;
+            targetX = event.clientX;
+            targetY = event.clientY;
+            if (!moving) {
+                moveCharacter();
+            }
         });
+
+        function moveCharacter() {
+            moving = true;
+            function step() {
+                let rect = character.getBoundingClientRect();
+                let x = rect.left + rect.width / 2;
+                let y = rect.top + rect.height / 2;
+                
+                let dx = targetX - x;
+                let dy = targetY - y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 1) {
+                    moving = false;
+                    return;
+                }
+                
+                let angle = Math.atan2(dy, dx);
+                let moveX = Math.cos(angle) * (speed / 60);
+                let moveY = Math.sin(angle) * (speed / 60);
+                
+                character.style.left = `${x + moveX}px`;
+                character.style.top = `${y + moveY}px`;
+                requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        }
     </script>
 </body>
 </html>
-
