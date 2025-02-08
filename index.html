@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Noktalama Karakteri</title>
+    <title>Savaşçı Noktalama Karakteri</title>
     <style>
         body {
             margin: 0;
@@ -17,11 +17,20 @@
             font-size: 50px;
             color: white;
             transform: translate(-50%, -50%);
+            font-weight: bold;
+            text-shadow: 2px 2px 5px red;
+        }
+        .attack {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: yellow;
+            border-radius: 50%;
         }
     </style>
 </head>
 <body>
-    <div class="character">!?;:.,</div>
+    <div class="character">⚔️!?#</div>
 
     <script>
         const character = document.querySelector('.character');
@@ -36,7 +45,31 @@
             if (event.key === 'ArrowRight') posX += step;
             character.style.left = `${posX}px`;
             character.style.top = `${posY}px`;
+
+            if (event.key === ' ') {
+                attack();
+            }
         });
+
+        function attack() {
+            const attackElement = document.createElement('div');
+            attackElement.classList.add('attack');
+            document.body.appendChild(attackElement);
+            
+            let attackX = posX;
+            let attackY = posY;
+            attackElement.style.left = `${attackX}px`;
+            attackElement.style.top = `${attackY}px`;
+            
+            const attackInterval = setInterval(() => {
+                attackX += 20;
+                attackElement.style.left = `${attackX}px`;
+                if (attackX > window.innerWidth) {
+                    clearInterval(attackInterval);
+                    attackElement.remove();
+                }
+            }, 50);
+        }
     </script>
 </body>
 </html>
