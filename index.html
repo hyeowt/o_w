@@ -30,19 +30,32 @@
     </style>
 </head>
 <body>
-    <div class="character">⚔️!?#</div>
+    <div class="character">⚔️</div>
 
     <script>
         const character = document.querySelector('.character');
         let posX = window.innerWidth / 2;
         let posY = window.innerHeight / 2;
         const step = 10;
+        let direction = 'right';
 
         document.addEventListener('keydown', (event) => {
-            if (event.key === 'ArrowUp') posY -= step;
-            if (event.key === 'ArrowDown') posY += step;
-            if (event.key === 'ArrowLeft') posX -= step;
-            if (event.key === 'ArrowRight') posX += step;
+            if (event.key === 'ArrowUp') {
+                posY -= step;
+                direction = 'up';
+            }
+            if (event.key === 'ArrowDown') {
+                posY += step;
+                direction = 'down';
+            }
+            if (event.key === 'ArrowLeft') {
+                posX -= step;
+                direction = 'left';
+            }
+            if (event.key === 'ArrowRight') {
+                posX += step;
+                direction = 'right';
+            }
             character.style.left = `${posX}px`;
             character.style.top = `${posY}px`;
 
@@ -62,9 +75,15 @@
             attackElement.style.top = `${attackY}px`;
             
             const attackInterval = setInterval(() => {
-                attackX += 20;
+                if (direction === 'right') attackX += 20;
+                if (direction === 'left') attackX -= 20;
+                if (direction === 'up') attackY -= 20;
+                if (direction === 'down') attackY += 20;
+                
                 attackElement.style.left = `${attackX}px`;
-                if (attackX > window.innerWidth) {
+                attackElement.style.top = `${attackY}px`;
+                
+                if (attackX > window.innerWidth || attackX < 0 || attackY > window.innerHeight || attackY < 0) {
                     clearInterval(attackInterval);
                     attackElement.remove();
                 }
