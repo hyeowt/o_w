@@ -20,7 +20,7 @@
 <body>
     <h1>Soulslike Web Game</h1>
     <canvas id="gameCanvas" width="800" height="400"></canvas>
-    <p>Use Arrow keys to move, Space to attack, Enter to progress levels, Q/E to change weapons</p>
+    <p>Use Arrow keys to move, Space to attack, Enter to progress levels, Q/E to change weapons, Shift to dodge, F to cast magic</p>
     
     <script>
         const canvas = document.getElementById('gameCanvas');
@@ -31,8 +31,8 @@
             { name: 'Spear', damage: 15, speed: 3 },
             { name: 'Bow', damage: 8, speed: 7 }
         ];
-        
-        let player = { x: 50, y: 200, width: 30, height: 50, color: 'blue', attacking: false, health: 100, weaponIndex: 0 };
+        let magic = { name: 'Fireball', damage: 12, speed: 6, active: false, x: 0, y: 0 };
+        let player = { x: 50, y: 200, width: 30, height: 50, color: 'blue', attacking: false, health: 100, weaponIndex: 0, dodging: false };
         let enemies = [];
         let keys = {};
         let level = 1;
@@ -43,6 +43,8 @@
         document.addEventListener('keydown', (e) => {
             if (e.code === 'KeyQ') player.weaponIndex = (player.weaponIndex - 1 + weapons.length) % weapons.length;
             if (e.code === 'KeyE') player.weaponIndex = (player.weaponIndex + 1) % weapons.length;
+            if (e.code === 'ShiftLeft') dodge();
+            if (e.code === 'KeyF') castMagic();
         });
 
         function spawnEnemies() {
@@ -63,6 +65,19 @@
             }
         }
 
+        function dodge() {
+            player.dodging = true;
+            setTimeout(() => player.dodging = false, 500);
+        }
+
+        function castMagic() {
+            if (!magic.active) {
+                magic.active = true;
+                magic.x = player.x + 30;
+                magic.y = player.y + 10;
+            }
+        }
+
         function update() {
             if (keys['ArrowRight']) player.x += 5;
             if (keys['ArrowLeft']) player.x -= 5;
@@ -80,10 +95,22 @@
                     if (player.x < enemy.x) enemy.x -= enemy.speed;
                     else enemy.x += enemy.speed;
                 }
-                if (enemy.alive && Math.abs(player.x - enemy.x) < 50) {
+                if (enemy.alive && Math.abs(player.x - enemy.x) < 50 && !player.dodging) {
                     player.health -= enemy.type === 'fast' ? 0.3 : 0.7;
                 }
             });
+
+            if (magic.active) {
+                magic.x += magic.speed;
+                enemies.forEach(enemy => {
+                    if (Math.abs(magic.x - enemy.x) < 30 && enemy.alive) {
+                        enemy.health -= magic.damage;
+                        if (enemy.health <= 0) enemy.alive = false;
+                        magic.active = false;
+                    }
+                });
+                if (magic.x > canvas.width) magic.active = false;
+            }
 
             if (enemies.every(enemy => !enemy.alive) && keys['Enter']) {
                 nextLevel();
@@ -107,6 +134,11 @@
                     ctx.fillText(`Enemy HP: ${enemy.health}`, enemy.x, enemy.y - 10);
                 }
             });
+
+            if (magic.active) {
+                ctx.fillStyle = 'orange';
+                ctx.fillRect(magic.x, magic.y, 10, 10);
+            }
             
             if (enemies.every(enemy => !enemy.alive)) {
                 ctx.fillStyle = 'yellow';
