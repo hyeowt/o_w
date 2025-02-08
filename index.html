@@ -3,127 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Online Savaşçı Noktalama Karakteri</title>
-    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <title>Basit Web Sitesi</title>
     <style>
         body {
-            margin: 0;
-            overflow: hidden;
-            background-color: #222;
-            color: white;
             font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            background-color: #f4f4f4;
+            position: relative;
         }
-        .character {
+        header {
+            background: #333;
+            color: white;
+            padding: 15px;
+            font-size: 24px;
+        }
+        main {
+            padding: 20px;
+        }
+        footer {
+            background: #333;
+            color: white;
+            padding: 10px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+        #character {
             position: absolute;
             font-size: 50px;
-            font-weight: bold;
-            text-shadow: 2px 2px 5px red;
-        }
-        .attack {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-        }
-        .scoreboard {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.5);
-            padding: 10px;
-            border-radius: 10px;
+            cursor: pointer;
+            transition: left 0.5s, top 0.5s;
         }
     </style>
 </head>
 <body>
-    <div class="scoreboard">Oyuncu 1: <span id="score1">0</span> - Oyuncu 2: <span id="score2">0</span></div>
+    <header>
+        Basit Web Sitesi
+    </header>
+    <main>
+        <h1>Merhaba, Dünya!</h1>
+        <p>Bu, HTML ile oluşturulmuş basit bir web sitesidir.</p>
+        <div id="character">⚔️</div>
+    </main>
+    <footer>
+        &copy; 2025 Basit Web Sitesi
+    </footer>
 
     <script>
-        const socket = io('http://localhost:3000');
-        const characters = {};
-        const attacks = [];
-        let playerId = null;
-        let score = { player1: 0, player2: 0 };
-
-        socket.on('init', (id) => {
-            playerId = id;
-        });
-
-        socket.on('updatePlayers', (players) => {
-            Object.keys(players).forEach(id => {
-                if (!characters[id]) {
-                    const char = document.createElement('div');
-                    char.classList.add('character');
-                    char.textContent = '⚔️';
-                    char.style.color = id === playerId ? 'blue' : 'red';
-                    document.body.appendChild(char);
-                    characters[id] = char;
-                }
-                characters[id].style.left = `${players[id].x}px`;
-                characters[id].style.top = `${players[id].y}px`;
-            });
-        });
-
-        socket.on('playerDisconnected', (id) => {
-            if (characters[id]) {
-                characters[id].remove();
-                delete characters[id];
-            }
-        });
-
-        socket.on('attack', ({ id, x, y, direction }) => {
-            const attackElement = document.createElement('div');
-            attackElement.classList.add('attack');
-            attackElement.style.left = `${x}px`;
-            attackElement.style.top = `${y}px`;
-            attackElement.style.backgroundColor = id === playerId ? 'blue' : 'red';
-            document.body.appendChild(attackElement);
-            attacks.push({ element: attackElement, direction, owner: id });
-        });
-
-        document.addEventListener('keydown', (event) => {
-            let move = { x: 0, y: 0 };
-            if (event.key === 'ArrowUp') move.y = -10;
-            if (event.key === 'ArrowDown') move.y = 10;
-            if (event.key === 'ArrowLeft') move.x = -10;
-            if (event.key === 'ArrowRight') move.x = 10;
-            if (move.x !== 0 || move.y !== 0) {
-                socket.emit('move', move);
-            }
-            if (event.key === ' ') {
-                socket.emit('attack');
-            }
-        });
-
-        function gameLoop() {
-            attacks.forEach((attack, index) => {
-                if (attack.direction === 'right') attack.element.style.left = `${parseInt(attack.element.style.left) + 10}px`;
-                if (attack.direction === 'left') attack.element.style.left = `${parseInt(attack.element.style.left) - 10}px`;
-                if (attack.direction === 'up') attack.element.style.top = `${parseInt(attack.element.style.top) - 10}px`;
-                if (attack.direction === 'down') attack.element.style.top = `${parseInt(attack.element.style.top) + 10}px`;
-                
-                Object.keys(characters).forEach(id => {
-                    if (id !== attack.owner) {
-                        const char = characters[id];
-                        const rect1 = char.getBoundingClientRect();
-                        const rect2 = attack.element.getBoundingClientRect();
-                        if (rect1.left < rect2.right && rect1.right > rect2.left && rect1.top < rect2.bottom && rect1.bottom > rect2.top) {
-                            socket.emit('hit', { attacker: attack.owner, victim: id });
-                            attack.element.remove();
-                            attacks.splice(index, 1);
-                        }
-                    }
-                });
-            });
-            requestAnimationFrame(gameLoop);
-        }
-        gameLoop();
-
-        socket.on('scoreUpdate', (newScore) => {
-            score = newScore;
-            document.getElementById('score1').textContent = score.player1;
-            document.getElementById('score2').textContent = score.player2;
+        document.addEventListener('contextmenu', function(event) {
+            event.preventDefault();
+            let character = document.getElementById('character');
+            character.style.left = event.pageX + 'px';
+            character.style.top = event.pageY + 'px';
         });
     </script>
 </body>
