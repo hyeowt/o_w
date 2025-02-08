@@ -7,32 +7,35 @@
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
     <style>
         body { margin: 0; overflow: hidden; }
-        #healthBar {
+        #healthBarContainer {
             position: absolute;
             top: 10px;
             left: 10px;
             width: 200px;
             height: 20px;
+            background: gray;
+        }
+        #healthBar {
+            width: 100%;
+            height: 100%;
             background: red;
         }
     </style>
 </head>
 <body>
-    <div id="healthBar"></div>
+    <div id="healthBarContainer">
+        <div id="healthBar"></div>
+    </div>
     <script>
         const config = {
             type: Phaser.AUTO,
             width: 800,
             height: 600,
             physics: { default: 'arcade', arcade: { gravity: { y: 300 }, debug: false } },
-            scene: {
-                preload: preload,
-                create: create,
-                update: update
-            }
+            scene: { preload, create, update }
         };
         
-        const game = new Phaser.Game(config);
+        let game = new Phaser.Game(config);
         let player, enemy, cursors, playerHealth = 100;
         
         function preload() {
@@ -43,14 +46,8 @@
         
         function create() {
             this.add.image(400, 300, 'background');
-            player = this.physics.add.sprite(100, 450, 'knight');
-            player.setBounce(0.2);
-            player.setCollideWorldBounds(true);
-            
-            enemy = this.physics.add.sprite(600, 450, 'enemy');
-            enemy.setBounce(0.2);
-            enemy.setCollideWorldBounds(true);
-            enemy.setVelocityX(-50);
+            player = this.physics.add.sprite(100, 450, 'knight').setBounce(0.2).setCollideWorldBounds(true);
+            enemy = this.physics.add.sprite(600, 450, 'enemy').setBounce(0.2).setCollideWorldBounds(true).setVelocityX(-50);
             
             this.anims.create({
                 key: 'walk',
@@ -70,6 +67,13 @@
         }
         
         function update() {
+            handlePlayerMovement();
+            enemy.anims.play('enemy_walk', true);
+            checkCollision();
+        }
+        
+        function handlePlayerMovement() {
+            player.setVelocityX(0);
             if (cursors.right.isDown) {
                 player.setVelocityX(160);
                 player.anims.play('walk', true);
@@ -77,34 +81,27 @@
                 player.setVelocityX(-160);
                 player.anims.play('walk', true);
             } else {
-                player.setVelocityX(0);
                 player.anims.stop();
             }
             
-            if (cursors.space.isDown) {
+            if (Phaser.Input.Keyboard.JustDown(cursors.space)) {
                 attack();
             }
-            
-            enemy.anims.play('enemy_walk', true);
-            checkCollision();
         }
         
         function attack() {
-            let distance = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
-            if (distance < 80) {
+            if (Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y) < 80) {
                 enemy.setTint(0xff0000);
-                setTimeout(() => enemy.destroy(), 500);
+                this.time.delayedCall(500, () => enemy.destroy());
             }
         }
         
         function checkCollision() {
-            let distance = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
-            if (distance < 50) {
-                playerHealth -= 1;
-                document.getElementById('healthBar').style.width = playerHealth * 2 + 'px';
+            if (Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y) < 50) {
+                playerHealth = Math.max(0, playerHealth - 1);
+                document.getElementById('healthBar').style.width = playerHealth + '%';
                 if (playerHealth <= 0) {
-                    alert('Game Over!');
-                    location.reload();
+                    setTimeout(() => { alert('Game Over!'); location.reload(); }, 500);
                 }
             }
         }
