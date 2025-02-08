@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Noktalama Karakteri</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #222;
+        }
+        .character {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            font-size: 50px;
+            color: white;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+<body>
+    <div class="character">!?;:.,</div>
+
+    <script>
+        const character = document.querySelector('.character');
+        let posX = window.innerWidth / 2;
+        let posY = window.innerHeight / 2;
+        const step = 10;
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowUp') posY -= step;
+            if (event.key === 'ArrowDown') posY += step;
+            if (event.key === 'ArrowLeft') posX -= step;
+            if (event.key === 'ArrowRight') posX += step;
+            character.style.left = `${posX}px`;
+            character.style.top = `${posY}px`;
+        });
+    </script>
+</body>
+</html>
