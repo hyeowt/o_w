@@ -27,7 +27,7 @@
         const ctx = canvas.getContext('2d');
 
         let player = { x: 50, y: 200, width: 30, height: 50, color: 'blue', attacking: false, health: 100 };
-        let enemy = { x: 600, y: 200, width: 30, height: 50, color: 'red', alive: true, health: 50 };
+        let enemy = { x: 600, y: 200, width: 30, height: 50, color: 'red', alive: true, health: 50, speed: 2 };
         let keys = {};
 
         document.addEventListener('keydown', (e) => { keys[e.code] = true; });
@@ -44,8 +44,13 @@
                 if (enemy.health <= 0) enemy.alive = false;
             }
 
+            if (enemy.alive && Math.abs(player.x - enemy.x) < 200) {
+                if (player.x < enemy.x) enemy.x -= enemy.speed;
+                else enemy.x += enemy.speed;
+            }
+
             if (enemy.alive && Math.abs(player.x - enemy.x) < 50) {
-                player.health -= 0.2;
+                player.health -= 0.5;
             }
         }
 
