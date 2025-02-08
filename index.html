@@ -135,14 +135,13 @@
             attack.style.top = `${rect.top + rect.height / 2}px`;
             let attackTargetX = mouseX;
             let attackTargetY = mouseY;
-
+            let dx = attackTargetX - rect.left;
+            let dy = attackTargetY - rect.top;
+            let angle = Math.atan2(dy, dx);
+            
             function moveAttack() {
-                let attackRect = attack.getBoundingClientRect();
-                let dx = attackTargetX - attackRect.left;
-                let dy = attackTargetY - attackRect.top;
-                let angle = Math.atan2(dy, dx);
-                attack.style.left = `${attackRect.left + Math.cos(angle) * attackSpeed}px`;
-                attack.style.top = `${attackRect.top + Math.sin(angle) * attackSpeed}px`;
+                attack.style.left = `${parseFloat(attack.style.left) + Math.cos(angle) * attackSpeed}px`;
+                attack.style.top = `${parseFloat(attack.style.top) + Math.sin(angle) * attackSpeed}px`;
                 requestAnimationFrame(moveAttack);
             }
             requestAnimationFrame(moveAttack);
@@ -172,7 +171,17 @@
 
             enemy.style.left = `${spawnX}px`;
             enemy.style.top = `${spawnY}px`;
-            requestAnimationFrame(() => moveEnemy(enemy));
+            
+            function moveEnemy() {
+                let rect = character.getBoundingClientRect();
+                let dx = rect.left - spawnX;
+                let dy = rect.top - spawnY;
+                let angle = Math.atan2(dy, dx);
+                enemy.style.left = `${parseFloat(enemy.style.left) + Math.cos(angle) * enemySpeed}px`;
+                enemy.style.top = `${parseFloat(enemy.style.top) + Math.sin(angle) * enemySpeed}px`;
+                requestAnimationFrame(moveEnemy);
+            }
+            requestAnimationFrame(moveEnemy);
         }
         setInterval(spawnEnemy, enemySpawnRate);
     </script>
