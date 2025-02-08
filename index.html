@@ -166,10 +166,9 @@
                     });
                     
                     if (
+                        attackRect.left > 0 && attackRect.top > 0 &&
                         attackRect.left < window.innerWidth &&
-                        attackRect.top < window.innerHeight &&
-                        attackRect.left > 0 &&
-                        attackRect.top > 0
+                        attackRect.top < window.innerHeight
                     ) {
                         requestAnimationFrame(moveAttack);
                     } else {
