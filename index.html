@@ -60,11 +60,11 @@
             character.style.top = `${posY}px`;
 
             if (event.key === ' ') {
-                attack();
+                attack(direction);
             }
         });
 
-        function attack() {
+        function attack(initialDirection) {
             const attackElement = document.createElement('div');
             attackElement.classList.add('attack');
             document.body.appendChild(attackElement);
@@ -75,10 +75,10 @@
             attackElement.style.top = `${attackY}px`;
             
             const attackInterval = setInterval(() => {
-                if (direction === 'right') attackX += 20;
-                if (direction === 'left') attackX -= 20;
-                if (direction === 'up') attackY -= 20;
-                if (direction === 'down') attackY += 20;
+                if (initialDirection === 'right') attackX += 20;
+                if (initialDirection === 'left') attackX -= 20;
+                if (initialDirection === 'up') attackY -= 20;
+                if (initialDirection === 'down') attackY += 20;
                 
                 attackElement.style.left = `${attackX}px`;
                 attackElement.style.top = `${attackY}px`;
