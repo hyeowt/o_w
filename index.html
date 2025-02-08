@@ -1,176 +1,61 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Karakter Hareketi ve Savaş</title>
+    <title>Dark Souls Clone</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: black;
-            overflow: hidden;
-            position: relative;
-            height: 100vh;
-            width: 100vw;
-        }
-        #character {
-            position: absolute;
-            font-size: 50px;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-        }
-        .enemy {
-            position: absolute;
-            font-size: 40px;
-            color: red;
-        }
-        .attack {
-            position: absolute;
-            font-size: 30px;
-            color: yellow;
-        }
-        .target-point {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            background-color: green;
-            border-radius: 50%;
-        }
-        #score {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 24px;
-            color: white;
-        }
+        body { margin: 0; overflow: hidden; }
     </style>
 </head>
 <body>
-    <div id="score">Skor: 0</div>
-    <div id="character">⚔️</div>
-
     <script>
-        let character = document.getElementById('character');
-        let scoreDisplay = document.getElementById('score');
-        let speed = 3;
-        let enemySpeed = 1.5;
-        let attackSpeed = 6;
-        let enemySpawnRate = 3000;
-        let score = 0;
-        let targetX = window.innerWidth / 2;
-        let targetY = window.innerHeight / 2;
-        let moving = false;
-        let mouseX = 0;
-        let mouseY = 0;
-        let lastAttackTime = 0;
-        let targetPoint;
-
-        document.addEventListener('mousemove', function(event) {
-            mouseX = event.clientX;
-            mouseY = event.clientY;
-        });
-
-        document.addEventListener('click', function(event) {
-            targetX = event.clientX;
-            targetY = event.clientY;
-
-            if (targetPoint) targetPoint.remove();
-            targetPoint = document.createElement('div');
-            targetPoint.classList.add('target-point');
-            targetPoint.style.left = `${targetX - 5}px`;
-            targetPoint.style.top = `${targetY - 5}px`;
-            document.body.appendChild(targetPoint);
-
-            if (!moving) moveCharacter();
-        });
-
-        function moveCharacter() {
-            moving = true;
-            function step() {
-                let rect = character.getBoundingClientRect();
-                let x = rect.left + rect.width / 2;
-                let y = rect.top + rect.height / 2;
-                let dx = targetX - x;
-                let dy = targetY - y;
-                let distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance < 5) {
-                    moving = false;
-                    if (targetPoint) {
-                        targetPoint.remove();
-                        targetPoint = null;
-                    }
-                    return;
-                }
-
-                let angle = Math.atan2(dy, dx);
-                character.style.left = `${x + Math.cos(angle) * speed}px`;
-                character.style.top = `${y + Math.sin(angle) * speed}px`;
-                requestAnimationFrame(step);
+        const config = {
+            type: Phaser.AUTO,
+            width: 800,
+            height: 600,
+            physics: { default: 'arcade', arcade: { gravity: { y: 300 }, debug: false } },
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
             }
-            requestAnimationFrame(step);
+        };
+        
+        const game = new Phaser.Game(config);
+        let player;
+        
+        function preload() {
+            this.load.image('background', 'https://via.placeholder.com/800x600');
+            this.load.spritesheet('knight', 'https://opengameart.org/sites/default/files/knight_walk.png', { frameWidth: 64, frameHeight: 64 });
         }
-
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'q') {
-                let now = Date.now();
-                if (now - lastAttackTime > 500) {
-                    lastAttackTime = now;
-                    spawnAttack();
-                }
-            }
-        });
-
-        function spawnAttack() {
-            let attack = document.createElement('div');
-            attack.classList.add('attack');
-            attack.textContent = '💥';
-            document.body.appendChild(attack);
+        
+        function create() {
+            this.add.image(400, 300, 'background');
+            player = this.physics.add.sprite(100, 450, 'knight');
+            player.setBounce(0.2);
+            player.setCollideWorldBounds(true);
             
-            let rect = character.getBoundingClientRect();
-            attack.style.left = `${rect.left + rect.width / 2}px`;
-            attack.style.top = `${rect.top + rect.height / 2}px`;
-            let attackTargetX = mouseX;
-            let attackTargetY = mouseY;
-            let dx = attackTargetX - rect.left;
-            let dy = attackTargetY - rect.top;
-            let angle = Math.atan2(dy, dx);
+            this.anims.create({
+                key: 'walk',
+                frames: this.anims.generateFrameNumbers('knight', { start: 0, end: 3 }),
+                frameRate: 10,
+                repeat: -1
+            });
             
-            function moveAttack() {
-                attack.style.left = `${parseFloat(attack.style.left) + Math.cos(angle) * attackSpeed}px`;
-                attack.style.top = `${parseFloat(attack.style.top) + Math.sin(angle) * attackSpeed}px`;
-                requestAnimationFrame(moveAttack);
-            }
-            requestAnimationFrame(moveAttack);
+            this.input.keyboard.on('keydown-RIGHT', () => {
+                player.setVelocityX(160);
+                player.anims.play('walk', true);
+            });
+            
+            this.input.keyboard.on('keyup-RIGHT', () => {
+                player.setVelocityX(0);
+                player.anims.stop();
+            });
         }
-
-        function spawnEnemy() {
-            let enemy = document.createElement('div');
-            enemy.classList.add('enemy');
-            enemy.textContent = '👹';
-            document.body.appendChild(enemy);
-
-            let spawnX = Math.random() * window.innerWidth;
-            let spawnY = Math.random() * window.innerHeight;
-            enemy.style.left = `${spawnX}px`;
-            enemy.style.top = `${spawnY}px`;
-            
-            function moveEnemy() {
-                let rect = character.getBoundingClientRect();
-                let dx = rect.left - spawnX;
-                let dy = rect.top - spawnY;
-                let angle = Math.atan2(dy, dx);
-                enemy.style.left = `${parseFloat(enemy.style.left) + Math.cos(angle) * enemySpeed}px`;
-                enemy.style.top = `${parseFloat(enemy.style.top) + Math.sin(angle) * enemySpeed}px`;
-                requestAnimationFrame(moveEnemy);
-            }
-            requestAnimationFrame(moveEnemy);
-        }
-
-        setInterval(spawnEnemy, enemySpawnRate);
+        
+        function update() {}
     </script>
 </body>
 </html>
