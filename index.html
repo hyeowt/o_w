@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Karakter Hareketi</title>
+    <title>Karakter Hareketi ve Savaş</title>
     <style>
         body {
             margin: 0;
@@ -21,6 +21,16 @@
             top: 50%;
             transform: translate(-50%, -50%);
         }
+        .enemy {
+            position: absolute;
+            font-size: 40px;
+            color: red;
+        }
+        .attack {
+            position: absolute;
+            font-size: 30px;
+            color: yellow;
+        }
     </style>
 </head>
 <body>
@@ -28,11 +38,13 @@
 
     <script>
         let character = document.getElementById('character');
-        let speed = 200; // Piksel/saniye
+        let speed = 200;
+        let enemySpeed = 100;
+        let attackSpeed = 400;
         let targetX = window.innerWidth / 2;
         let targetY = window.innerHeight / 2;
         let moving = false;
-
+        
         document.addEventListener('click', function(event) {
             targetX = event.clientX;
             targetY = event.clientY;
@@ -67,6 +79,93 @@
             }
             requestAnimationFrame(step);
         }
+
+        function spawnEnemy() {
+            let enemy = document.createElement('div');
+            enemy.classList.add('enemy');
+            enemy.textContent = '👹';
+            document.body.appendChild(enemy);
+            
+            let spawnX = Math.random() * window.innerWidth;
+            let spawnY = -50;
+            enemy.style.left = `${spawnX}px`;
+            enemy.style.top = `${spawnY}px`;
+            
+            function moveEnemy() {
+                let charRect = character.getBoundingClientRect();
+                let enemyRect = enemy.getBoundingClientRect();
+                let dx = charRect.left - enemyRect.left;
+                let dy = charRect.top - enemyRect.top;
+                let angle = Math.atan2(dy, dx);
+                let moveX = Math.cos(angle) * (enemySpeed / 60);
+                let moveY = Math.sin(angle) * (enemySpeed / 60);
+                
+                enemy.style.left = `${enemyRect.left + moveX}px`;
+                enemy.style.top = `${enemyRect.top + moveY}px`;
+                
+                if (Math.abs(dx) < 20 && Math.abs(dy) < 20) {
+                    alert('Oyun Bitti!');
+                    location.reload();
+                } else {
+                    requestAnimationFrame(moveEnemy);
+                }
+            }
+            requestAnimationFrame(moveEnemy);
+        }
+
+        setInterval(spawnEnemy, 2000);
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'q') {
+                let attack = document.createElement('div');
+                attack.classList.add('attack');
+                attack.textContent = '💥';
+                document.body.appendChild(attack);
+                
+                let charRect = character.getBoundingClientRect();
+                attack.style.left = `${charRect.left + charRect.width / 2}px`;
+                attack.style.top = `${charRect.top + charRect.height / 2}px`;
+                
+                let mouseX = targetX;
+                let mouseY = targetY;
+                let dx = mouseX - charRect.left;
+                let dy = mouseY - charRect.top;
+                let angle = Math.atan2(dy, dx);
+                
+                function moveAttack() {
+                    let attackRect = attack.getBoundingClientRect();
+                    let moveX = Math.cos(angle) * (attackSpeed / 60);
+                    let moveY = Math.sin(angle) * (attackSpeed / 60);
+                    attack.style.left = `${attackRect.left + moveX}px`;
+                    attack.style.top = `${attackRect.top + moveY}px`;
+                    
+                    document.querySelectorAll('.enemy').forEach(enemy => {
+                        let enemyRect = enemy.getBoundingClientRect();
+                        if (
+                            attackRect.left < enemyRect.right &&
+                            attackRect.right > enemyRect.left &&
+                            attackRect.top < enemyRect.bottom &&
+                            attackRect.bottom > enemyRect.top
+                        ) {
+                            enemy.remove();
+                            attack.remove();
+                        }
+                    });
+                    
+                    if (
+                        attackRect.left < window.innerWidth &&
+                        attackRect.top < window.innerHeight &&
+                        attackRect.left > 0 &&
+                        attackRect.top > 0
+                    ) {
+                        requestAnimationFrame(moveAttack);
+                    } else {
+                        attack.remove();
+                    }
+                }
+                requestAnimationFrame(moveAttack);
+            }
+        });
     </script>
 </body>
 </html>
