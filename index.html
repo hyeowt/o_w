@@ -3,108 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dark Souls Clone</title>
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <title>Soulslike Web Game</title>
     <style>
-        body { margin: 0; overflow: hidden; }
-        #healthBarContainer {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            width: 200px;
-            height: 20px;
-            background: gray;
+        body {
+            background-color: black;
+            color: white;
+            text-align: center;
+            font-family: Arial, sans-serif;
         }
-        #healthBar {
-            width: 100%;
-            height: 100%;
-            background: red;
+        #gameCanvas {
+            border: 2px solid white;
+            background-color: gray;
         }
     </style>
 </head>
 <body>
-    <div id="healthBarContainer">
-        <div id="healthBar"></div>
-    </div>
+    <h1>Soulslike Web Game</h1>
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <p>Use Arrow keys to move, Space to attack</p>
+    
     <script>
-        const config = {
-            type: Phaser.AUTO,
-            width: 800,
-            height: 600,
-            physics: { default: 'arcade', arcade: { gravity: { y: 300 }, debug: false } },
-            scene: { preload, create, update }
-        };
-        
-        let game = new Phaser.Game(config);
-        let player, enemy, cursors, playerHealth = 100;
-        
-        function preload() {
-            this.load.image('background', 'https://via.placeholder.com/800x600');
-            this.load.spritesheet('knight', 'https://opengameart.org/sites/default/files/knight_walk.png', { frameWidth: 64, frameHeight: 64 });
-            this.load.spritesheet('enemy', 'https://opengameart.org/sites/default/files/goblin_walk.png', { frameWidth: 64, frameHeight: 64 });
-        }
-        
-        function create() {
-            this.add.image(400, 300, 'background');
-            player = this.physics.add.sprite(100, 450, 'knight').setBounce(0.2).setCollideWorldBounds(true);
-            enemy = this.physics.add.sprite(600, 450, 'enemy').setBounce(0.2).setCollideWorldBounds(true).setVelocityX(-50);
-            
-            this.anims.create({
-                key: 'walk',
-                frames: this.anims.generateFrameNumbers('knight', { start: 0, end: 3 }),
-                frameRate: 10,
-                repeat: -1
-            });
-            
-            this.anims.create({
-                key: 'enemy_walk',
-                frames: this.anims.generateFrameNumbers('enemy', { start: 0, end: 3 }),
-                frameRate: 10,
-                repeat: -1
-            });
-            
-            cursors = this.input.keyboard.createCursorKeys();
-        }
-        
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let player = { x: 50, y: 200, width: 30, height: 50, color: 'blue', attacking: false };
+        let enemy = { x: 600, y: 200, width: 30, height: 50, color: 'red', alive: true };
+        let keys = {};
+
+        document.addEventListener('keydown', (e) => { keys[e.code] = true; });
+        document.addEventListener('keyup', (e) => { keys[e.code] = false; });
+
         function update() {
-            handlePlayerMovement();
-            enemy.anims.play('enemy_walk', true);
-            checkCollision();
-        }
-        
-        function handlePlayerMovement() {
-            player.setVelocityX(0);
-            if (cursors.right.isDown) {
-                player.setVelocityX(160);
-                player.anims.play('walk', true);
-            } else if (cursors.left.isDown) {
-                player.setVelocityX(-160);
-                player.anims.play('walk', true);
-            } else {
-                player.anims.stop();
+            if (keys['ArrowRight']) player.x += 5;
+            if (keys['ArrowLeft']) player.x -= 5;
+            if (keys['Space']) player.attacking = true;
+            else player.attacking = false;
+
+            if (player.attacking && Math.abs(player.x - enemy.x) < 40) {
+                enemy.alive = false;
             }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
             
-            if (Phaser.Input.Keyboard.JustDown(cursors.space)) {
-                attack();
+            if (enemy.alive) {
+                ctx.fillStyle = enemy.color;
+                ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
             }
         }
-        
-        function attack() {
-            if (Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y) < 80) {
-                enemy.setTint(0xff0000);
-                this.time.delayedCall(500, () => enemy.destroy());
-            }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
         }
-        
-        function checkCollision() {
-            if (Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y) < 50) {
-                playerHealth = Math.max(0, playerHealth - 1);
-                document.getElementById('healthBar').style.width = playerHealth + '%';
-                if (playerHealth <= 0) {
-                    setTimeout(() => { alert('Game Over!'); location.reload(); }, 500);
-                }
-            }
-        }
+
+        gameLoop();
     </script>
 </body>
 </html>
