@@ -121,6 +121,56 @@
             }
             requestAnimationFrame(step);
         }
+
+        function spawnEnemy() {
+            let enemy = document.createElement('div');
+            enemy.classList.add('enemy');
+            enemy.textContent = '👹';
+            document.body.appendChild(enemy);
+            
+            let spawnEdge = Math.floor(Math.random() * 4);
+            let spawnX, spawnY;
+            
+            if (spawnEdge === 0) {
+                spawnX = Math.random() * window.innerWidth;
+                spawnY = -50;
+            } else if (spawnEdge === 1) {
+                spawnX = Math.random() * window.innerWidth;
+                spawnY = window.innerHeight + 50;
+            } else if (spawnEdge === 2) {
+                spawnX = -50;
+                spawnY = Math.random() * window.innerHeight;
+            } else {
+                spawnX = window.innerWidth + 50;
+                spawnY = Math.random() * window.innerHeight;
+            }
+            
+            enemy.style.left = `${spawnX}px`;
+            enemy.style.top = `${spawnY}px`;
+            
+            function moveEnemy() {
+                let charRect = character.getBoundingClientRect();
+                let enemyRect = enemy.getBoundingClientRect();
+                let dx = charRect.left - enemyRect.left;
+                let dy = charRect.top - enemyRect.top;
+                let angle = Math.atan2(dy, dx);
+                let moveX = Math.cos(angle) * (enemySpeed / 60);
+                let moveY = Math.sin(angle) * (enemySpeed / 60);
+                
+                enemy.style.left = `${enemyRect.left + moveX}px`;
+                enemy.style.top = `${enemyRect.top + moveY}px`;
+                
+                if (Math.abs(dx) < 20 && Math.abs(dy) < 20) {
+                    alert('Oyun Bitti!');
+                    location.reload();
+                } else {
+                    requestAnimationFrame(moveEnemy);
+                }
+            }
+            requestAnimationFrame(moveEnemy);
+        }
+
+        setInterval(spawnEnemy, enemySpawnRate);
     </script>
 </body>
 </html>
