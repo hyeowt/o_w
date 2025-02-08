@@ -20,7 +20,7 @@
 <body>
     <h1>Soulslike Web Game</h1>
     <canvas id="gameCanvas" width="800" height="400"></canvas>
-    <p>Use Arrow keys to move, Space to attack</p>
+    <p>Use Arrow keys to move, Space to attack, Enter to progress levels</p>
     
     <script>
         const canvas = document.getElementById('gameCanvas');
@@ -29,6 +29,7 @@
         let player = { x: 50, y: 200, width: 30, height: 50, color: 'blue', attacking: false, health: 100 };
         let enemy = { x: 600, y: 200, width: 30, height: 50, color: 'red', alive: true, health: 50, speed: 2 };
         let keys = {};
+        let level = 1;
 
         document.addEventListener('keydown', (e) => { keys[e.code] = true; });
         document.addEventListener('keyup', (e) => { keys[e.code] = false; });
@@ -52,6 +53,10 @@
             if (enemy.alive && Math.abs(player.x - enemy.x) < 50) {
                 player.health -= 0.5;
             }
+
+            if (!enemy.alive && keys['Enter']) {
+                nextLevel();
+            }
         }
 
         function draw() {
@@ -60,13 +65,24 @@
             ctx.fillRect(player.x, player.y, player.width, player.height);
             ctx.fillStyle = 'white';
             ctx.fillText(`Player HP: ${Math.round(player.health)}`, 20, 20);
+            ctx.fillText(`Level: ${level}`, 700, 20);
             
             if (enemy.alive) {
                 ctx.fillStyle = enemy.color;
                 ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
                 ctx.fillStyle = 'white';
                 ctx.fillText(`Enemy HP: ${enemy.health}`, enemy.x, enemy.y - 10);
+            } else {
+                ctx.fillStyle = 'yellow';
+                ctx.fillText("Press Enter to progress to the next level", 250, 200);
             }
+        }
+
+        function nextLevel() {
+            level++;
+            player.x = 50;
+            player.health = 100;
+            enemy = { x: 600, y: 200, width: 30, height: 50, color: 'red', alive: true, health: 50 + level * 10, speed: 2 + level * 0.5 };
         }
 
         function gameLoop() {
